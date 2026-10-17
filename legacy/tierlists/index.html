@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recursive Tier List Maker</title>
+      <style>
+        :root {
+            --bg: #0b0b12;
+            --surface: #14141f;
+            --card: #1c1c2e;
+            --card-hover: #24243a;
+            --text: #eaeaf0;
+            --text-dim: #7a7a9a;
+            --accent: #7c5cfc;
+            --accent-glow: rgba(124,92,252,0.25);
+            --accent2: #a78bfa;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --border: #2a2a40;
+            --radius: 12px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* ===== HEADER ===== */
+        header {
+            background: var(--surface);
+            padding: 0.7rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+
+        .logo h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 7px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            letter-spacing: 0.01em;
+        }
+
+        .btn:hover { background: #8b6cff; transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
+        .btn:active { transform: translateY(0); }
+        .btn:focus-visible, .tier-card:focus-visible, .item-card:focus-visible {
+            outline: 2px solid var(--accent2);
+            outline-offset: 2px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+        .btn-ghost:hover { background: var(--card); color: var(--text); border-color: var(--accent); box-shadow: none; }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+        .btn-danger:hover { background: #f87171; box-shadow: 0 4px 16px rgba(239,68,68,0.25); }
+
+        .btn-sm { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+        .btn-xs { padding: 2px 6px; font-size: 10px; border-radius: 4px; }
+
+        /* ===== MAIN ===== */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            position: relative;
+        }
+
+        /* ===== GALLERY ===== */
+        #gallery-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .gallery-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-dim);
+        }
+
+        .gallery-empty .empty-icon {
+            font-size: 56px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .gallery-empty p { font-size: 16px; margin-bottom: 20px; }
+
+        .gallery-toolbar {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .gallery-toolbar .input-group {
+            flex: 1;
+            min-width: 180px;
+            position: relative;
+        }
+
+        .gallery-toolbar input[type="text"] {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 9px 12px 9px 32px;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .gallery-toolbar input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .gallery-toolbar .input-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .gallery-toolbar select {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .gallery-toolbar select:focus { outline: none; border-color: var(--accent); }
+
+        .gallery-no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .gallery-tagbar {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .gallery-tagbar .tag-chip {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .gallery-tagbar .tag-chip:hover { border-color: var(--accent); color: var(--text); }
+
+        .gallery-tagbar .tag-chip.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .tier-card .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .tier-card .card-tag {
+            display: inline-block;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .tier-card .card-tag:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+        .tier-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tier-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tier-card:hover::before { opacity: 1; }
+
+        .tier-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(124,92,252,0.12);
+            border-color: var(--accent);
+            background: var(--card-hover);
+        }
+
+        .tier-card .card-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .tier-card .card-meta {
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .tier-card .card-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: none;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .tier-card:hover .card-actions { display: flex; opacity: 1; }
+
+        .tier-card .card-badge {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 8px;
+            margin-right: 4px;
+        }
+
+        .tier-card .card-note-icon {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            opacity: 0.85;
+        }
+
+        /* ===== TOOLTIP (заметки) ===== */
+        .has-tooltip { position: relative; }
+
+        .note-tooltip {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            background: #100f1a;
+            border: 1px solid var(--accent);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.45;
+            font-weight: 400;
+            text-align: left;
+            white-space: normal;
+            width: max-content;
+            max-width: 220px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.16s ease, transform 0.16s ease;
+            z-index: 60;
+        }
+
+        .note-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: var(--accent);
+        }
+
+        .has-tooltip:hover .note-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .has-tooltip:hover { z-index: 30; }
+
+        .note-tooltip .note-tooltip-label {
+            display: block;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent2);
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        /* ===== TIER VIEW ===== */
+        #tier-view {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: var(--text-dim);
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .breadcrumb span {
+            cursor: pointer;
+            transition: color 0.2s;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .breadcrumb span:hover { color: var(--text); background: var(--card); }
+        .breadcrumb .current { color: var(--accent2); font-weight: 600; cursor: default; background: none; }
+        .breadcrumb .sep { color: #444; }
+
+        /* Tier toolbar (buttons that open modals) */
+        .tier-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .controls .input-group {
+            flex: 1;
+            min-width: 140px;
+            position: relative;
+        }
+
+        .controls .input-group input {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+
+        .controls .input-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .controls .input-group .input-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .controls .input-group input.with-icon { padding-left: 32px; }
+
+        /* Tier Rows */
+        #tier-rows-container {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-right: 4px;
+        }
+
+        .tier-row {
+            display: flex;
+            min-height: 108px;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            border-radius: 10px;
+            transition: box-shadow 0.2s, border-color 0.2s;
+            align-items: stretch;
+        }
+
+        .tier-row:hover {
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            border-color: #3a3a50;
+        }
+
+        .tier-label {
+            width: 64px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            color: #000;
+            position: relative;
+            transition: filter 0.2s;
+            flex-shrink: 0;
+            letter-spacing: -0.02em;
+            border-radius: 9px 0 0 9px;
+        }
+
+        .tier-label:hover { filter: brightness(1.15); }
+        .tier-label { cursor: grab; }
+        .tier-label.dragging-tier { opacity: 0.4; }
+        .tier-label:active { cursor: grabbing; }
+
+        .tier-row.bank-row {
+            border-style: dashed;
+            border-color: #3a3a50;
+        }
+
+        .tier-label.bank-label {
+            background: var(--card) !important;
+            color: var(--text-dim) !important;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: default;
+            letter-spacing: 0.02em;
+        }
+
+        .tier-items.bank-items { min-height: 50px; }
+
+        .tier-label .tier-label-actions {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .tier-label:hover .tier-label-actions { display: flex; }
+
+        .tier-label .tier-label-actions .btn {
+            font-size: 8px;
+            padding: 1px 3px;
+            min-width: auto;
+            border-radius: 3px;
+            background: rgba(0,0,0,0.4);
+            color: #fff;
+        }
+
+        .tier-label .tier-label-actions .btn:hover { background: rgba(0,0,0,0.7); }
+
+        /* ===== FIX: Tier items as grid with fixed cell size ===== */
+        .tier-items {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 88px);
+            grid-auto-rows: 88px;
+            gap: 8px;
+            padding: 10px;
+            align-content: start;
+            min-height: 60px;
+            transition: background 0.2s;
+        }
+
+        .tier-items.drag-over {
+            background: rgba(124,92,252,0.06);
+        }
+
+        /* ===== ITEM CARD ===== */
+        .item-card {
+            width: 100%;
+            height: 100%;
+            cursor: move;
+            user-select: none;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+            position: relative;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+
+        .item-card-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #e4e0f5, #d0cce8);
+        }
+
+        .item-card.is-subtier .item-card-inner {
+            background: linear-gradient(135deg, #d8ccf8, #c4b5fd);
+        }
+
+        .item-card.is-subtier { border-color: var(--accent); }
+
+        .item-card .item-card-img {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            object-fit: cover;
+            display: block;
+            background: #14141f;
+        }
+
+        .item-card .item-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #14141f;
+            line-height: 1.2;
+        }
+
+        /* No image: name centered and vertically filling the whole square */
+        .item-card:not(.has-image) .item-name {
+            flex: 1;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            overflow: hidden;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px 6px;
+            word-break: break-word;
+        }
+
+        /* Has image: white plate under the image so text never blends into it */
+        .item-card.has-image .item-name {
+            background: #fdfdfd;
+            flex-shrink: 0;
+            padding: 5px 6px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 16px rgba(124,92,252,0.25);
+        }
+        .item-card:hover .item-card-inner { filter: brightness(0.94); }
+
+        .item-card .item-actions {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            display: none;
+            gap: 3px;
+            z-index: 3;
+        }
+
+        .item-card:hover .item-actions { display: flex; }
+
+        .item-card .item-actions .btn {
+            font-size: 9px;
+            padding: 1px 5px;
+            min-width: auto;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .item-card.dragging {
+            opacity: 0.3;
+            transform: scale(0.9);
+        }
+
+        .item-card.drag-over-before { box-shadow: -3px 0 0 0 var(--accent2), 0 1px 4px rgba(0,0,0,0.15); }
+        .item-card.drag-over-after { box-shadow: 3px 0 0 0 var(--accent2), 0 1px 4px rgba(0,0,0,0.15); }
+
+        .item-card .note-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 16px;
+            height: 16px;
+            background: var(--accent2);
+            color: #14141f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            z-index: 3;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        }
+
+        .item-card .subtier-badge {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 17px;
+            height: 17px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            z-index: 2;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        }
+
+        /* ===== GRAPH VIEW ===== */
+        #graph-view {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(11,11,18,0.96);
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        #graph-view .graph-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        #graph-view .graph-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .graph-container {
+            width: 100%;
+            height: calc(100% - 50px);
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            background-image: radial-gradient(circle, #2a2a40 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .graph-node {
+            position: absolute;
+            background: var(--card);
+            border: 2px solid var(--accent);
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: move;
+            white-space: nowrap;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            transition: box-shadow 0.2s, border-color 0.2s;
+            z-index: 2;
+        }
+
+        .graph-node:hover {
+            box-shadow: 0 6px 24px var(--accent-glow);
+            border-color: var(--accent2);
+        }
+
+        .graph-edge {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transform-origin: 0 0;
+            pointer-events: none;
+            opacity: 0.5;
+            z-index: 1;
+        }
+
+        .graph-edge::after {
+            content: '';
+            position: absolute;
+            right: -4px;
+            top: -3px;
+            width: 8px; height: 8px;
+            background: var(--accent2);
+            border-radius: 50%;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 440px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            animation: modalIn 0.2s ease-out;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: var(--text-dim);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .modal input[type="text"],
+        .modal input[type="url"],
+        .modal textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 14px;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        .modal input:focus, .modal textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .modal textarea {
+            min-height: 70px;
+            resize: vertical;
+            font-size: 13px;
+        }
+
+        .modal .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        /* ===== TOAST ===== */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            animation: toastIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 360px;
+        }
+
+        .toast.removing { animation: toastOut 0.25s ease-in forwards; }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(40px); }
+        }
+
+        .toast .toast-icon { font-size: 18px; }
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--danger); }
+        .toast.info { border-left: 3px solid var(--accent); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 700px) {
+            header { flex-direction: column; gap: 10px; padding: 10px; }
+            .header-actions { width: 100%; justify-content: center; flex-wrap: wrap; }
+            #gallery-view { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .tier-row { flex-direction: column; }
+            .tier-label { width: 100%; height: 32px; flex-direction: row; gap: 8px; border-radius: 9px 9px 0 0; }
+            .tier-label .tier-label-actions { flex-direction: row; top: auto; right: auto; position: static; }
+            .controls .input-group { min-width: 100px; }
+            
+            /* FIX: responsive grid for items */
+            .tier-items {
+                grid-template-columns: repeat(auto-fill, 72px);
+                grid-auto-rows: 72px;
+                gap: 6px;
+                padding: 8px;
+            }
+
+            .tier-row { min-height: calc(32px + 72px + 16px); }
+        }
+
+        @media (max-width: 450px) {
+            #gallery-view { grid-template-columns: 1fr; }
+            main { padding: 12px; }
+            .tier-items {
+                grid-template-columns: repeat(auto-fill, 64px);
+                grid-auto-rows: 64px;
+                gap: 4px;
+                padding: 6px;
+            }
+
+            .tier-row { min-height: calc(32px + 64px + 12px); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <div class="logo-icon">📊</div>
+            <h1>Recursive Tier Lists</h1>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-ghost" onclick="toggleGraph()" title="Показать схему связей всех тир-листов">🌐 Схема</button>
+            <button class="btn btn-ghost" onclick="exportData()" title="Скачать резервную копию в формате JSON">📤 Экспорт</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('import-input').click()" title="Загрузить резервную копию из файла">📥 Импорт</button>
+            <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+            <button class="btn" onclick="createNewTierList()" title="Создать новый тир-лист">➕ Создать</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- TOAST CONTAINER -->
+        <div class="toast-container" id="toast-container"></div>
+
+        <!-- GALLERY -->
+        <div id="gallery-view"></div>
+
+        <!-- TIER VIEW -->
+        <div id="tier-view">
+            <div class="breadcrumb" id="breadcrumb"></div>
+
+            <div class="tier-toolbar">
+                <button class="btn" onclick="openAddItemModal()" title="Добавить новый элемент в банк">➕ Элемент</button>
+                <button class="btn btn-ghost" onclick="openAddTierModal()" title="Добавить новый тир-ряд">➕ Тир</button>
+                <div style="flex:1"></div>
+                <button class="btn btn-ghost" onclick="goBack()" title="Вернуться назад">⬅ Назад</button>
+            </div>
+
+            <div id="tier-rows-container"></div>
+        </div>
+
+        <!-- GRAPH VIEW -->
+        <div id="graph-view">
+            <div class="graph-header">
+                <h3>🌐 Схема всех тир-листов</h3>
+                <div style="display:flex;gap:8px">
+                    <button class="btn btn-ghost btn-sm" onclick="toggleGraph()">Закрыть ✕</button>
+                </div>
+            </div>
+            <div class="graph-container" id="graph-container"></div>
+        </div>
+    </main>
+
+    <!-- MODAL: item / tier-list (name + optional image + optional note) -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <h3 id="modal-title">Редактировать</h3>
+            <label>Название</label>
+            <input type="text" id="modal-input-name">
+            <label id="modal-image-label">URL изображения</label>
+            <input type="url" id="modal-input-image" placeholder="https://...">
+            <label id="modal-note-label">Заметка <span style="text-transform:none;font-weight:400;opacity:0.7">(необязательно — покажется как подсказка при наведении)</span></label>
+            <textarea id="modal-input-note" placeholder="Например: почему этот элемент здесь, чем он отличается..." maxlength="300"></textarea>
+            <label id="modal-tags-label">Теги <span style="text-transform:none;font-weight:400;opacity:0.7">(через запятую — для группировки на главном экране)</span></label>
+            <input type="text" id="modal-input-tags" placeholder="Например: игры, 2024, любимое">
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">Отмена</button>
+                <button class="btn" onclick="modalConfirm()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: tier row (label + color) -->
+    <div class="modal-overlay" id="tier-modal-overlay">
+        <div class="modal">
+            <h3 id="tier-modal-title">Новый тир</h3>
+            <label>Название</label>
+            <input type="text" id="tier-modal-input-label" maxlength="12" placeholder="Например: Любимое">
+            <label>Цвет</label>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <input type="color" id="tier-modal-input-color" value="#ff7f7f" style="width:44px;height:36px;border:2px solid var(--border);border-radius:8px;cursor:pointer;background:none;padding:2px;">
+                <span style="font-size:12px;color:var(--text-dim)">Цвет фона этого тир-ряда</span>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeTierModal()">Отмена</button>
+                <button class="btn" onclick="tierModalConfirm()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ====================== DATA ======================
+        let state = {
+            tiers: JSON.parse(localStorage.getItem('tierLists3')) || {},
+            currentTierId: null,
+            history: []
+        };
+
+        const DEFAULT_TIERS = [
+            { label: 'S', color: '#ff7f7f' },
+            { label: 'A', color: '#ffbf7f' },
+            { label: 'B', color: '#ffff7f' },
+            { label: 'C', color: '#7fff7f' },
+            { label: 'D', color: '#7fbfff' },
+            { label: 'E', color: '#7f7fff' }
+        ];
+
+        // ====================== PERSISTENCE ======================
+        function save() {
+            localStorage.setItem('tierLists3', JSON.stringify(state.tiers));
+        }
+
+        // ====================== TOAST ======================
+        function toast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+            el.className = `toast ${type}`;
+            el.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ️'}</span><span>${escapeHtml(message)}</span>`;
+            container.appendChild(el);
+            setTimeout(() => {
+                el.classList.add('removing');
+                setTimeout(() => el.remove(), 250);
+            }, 2500);
+        }
+
+        // ====================== MODAL ======================
+        let modalCallback = null;
+
+        function openModal(title, nameVal = '', imageVal = '', callback, opts = {}) {
+            const { noteVal = '', showImage = true, showNote = false, showTags = false, tagsVal = '' } = opts;
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-input-name').value = nameVal;
+            document.getElementById('modal-input-image').value = imageVal;
+            document.getElementById('modal-input-note').value = noteVal;
+            document.getElementById('modal-input-tags').value = tagsVal;
+
+            const imageLabel = document.getElementById('modal-image-label');
+            const imageInput = document.getElementById('modal-input-image');
+            const noteLabel = document.getElementById('modal-note-label');
+            const noteInput = document.getElementById('modal-input-note');
+            const tagsLabel = document.getElementById('modal-tags-label');
+            const tagsInput = document.getElementById('modal-input-tags');
+            imageLabel.style.display = showImage ? '' : 'none';
+            imageInput.style.display = showImage ? '' : 'none';
+            noteLabel.style.display = showNote ? '' : 'none';
+            noteInput.style.display = showNote ? '' : 'none';
+            tagsLabel.style.display = showTags ? '' : 'none';
+            tagsInput.style.display = showTags ? '' : 'none';
+
+            document.getElementById('modal-overlay').classList.add('active');
+            modalCallback = callback;
+            setTimeout(() => document.getElementById('modal-input-name').focus(), 100);
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+            modalCallback = null;
+        }
+
+        function modalConfirm() {
+            const name = document.getElementById('modal-input-name').value.trim();
+            const image = document.getElementById('modal-input-image').value.trim();
+            const note = document.getElementById('modal-input-note').value.trim();
+            const tags = document.getElementById('modal-input-tags').value
+                .split(',')
+                .map(t => t.trim())
+                .filter(Boolean)
+                .filter((t, i, arr) => arr.indexOf(t) === i);
+            if (modalCallback) modalCallback(name, image, note, tags);
+            closeModal();
+        }
+
+        document.getElementById('modal-overlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+
+        // ====================== TIER MODAL (add/edit tier row: label + color) ======================
+        let tierModalCallback = null;
+
+        function openTierModal(title, labelVal = '', colorVal = '#ff7f7f', callback) {
+            document.getElementById('tier-modal-title').textContent = title;
+            document.getElementById('tier-modal-input-label').value = labelVal;
+            document.getElementById('tier-modal-input-color').value = colorVal;
+            document.getElementById('tier-modal-overlay').classList.add('active');
+            tierModalCallback = callback;
+            setTimeout(() => document.getElementById('tier-modal-input-label').focus(), 100);
+        }
+
+        function closeTierModal() {
+            document.getElementById('tier-modal-overlay').classList.remove('active');
+            tierModalCallback = null;
+        }
+
+        function tierModalConfirm() {
+            const label = document.getElementById('tier-modal-input-label').value.trim();
+            const color = document.getElementById('tier-modal-input-color').value;
+            if (tierModalCallback) tierModalCallback(label, color);
+            closeTierModal();
+        }
+
+        document.getElementById('tier-modal-overlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeTierModal();
+        });
+
+        // ====================== QUICK ACTIONS (open modals) ======================
+        function openAddItemModal() {
+            openModal('Новый элемент', '', '', (name, image, note) => {
+                if (!name) { toast('Введите название', 'error'); return; }
+                state.tiers[state.currentTierId].items.push({
+                    id: 'item_' + Date.now(),
+                    name: name,
+                    image: image || null,
+                    note: note || null,
+                    tier: null,
+                    subTierId: null
+                });
+                save();
+                renderTier();
+                toast(`"${name}" добавлен в банк`);
+            }, { showImage: true, showNote: true });
+        }
+
+        function openAddTierModal() {
+            openTierModal('Новый тир', '', '#ff7f7f', (label, color) => {
+                if (!label) { toast('Введите название тира', 'error'); return; }
+                const config = getTierConfig();
+                if (config.find(c => c.label === label)) { toast('Тир с таким именем уже есть', 'error'); return; }
+                config.push({ label, color });
+                save();
+                renderTier();
+                toast(`Тир "${label}" добавлен`);
+            });
+        }
+
+        // ====================== EXPORT / IMPORT ======================
+        function exportData() {
+            const data = JSON.stringify(state.tiers, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tierlists_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast('Данные экспортированы', 'info');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (typeof data !== 'object' || data === null) throw new Error('Invalid format');
+                    for (const key of Object.keys(data)) {
+                        if (!data[key].name || !data[key].items) {
+                            throw new Error(`Invalid entry: ${key}`);
+                        }
+                        if (!data[key].tierConfig) {
+                            data[key].tierConfig = JSON.parse(JSON.stringify(DEFAULT_TIERS));
+                        }
+                        if (!data[key].items) data[key].items = [];
+                        if (data[key].note === undefined) data[key].note = null;
+                        data[key].items.forEach(item => { if (item.note === undefined) item.note = null; });
+                    }
+                    const count = Object.keys(data).length;
+                    if (confirm(`Импортировать ${count} тир-листов?\n\nOK — добавить к существующим.\nОтмена — заменить все.`)) {
+                        Object.assign(state.tiers, data);
+                    } else {
+                        state.tiers = data;
+                    }
+                    save();
+                    renderGallery();
+                    if (state.currentTierId) {
+                        if (state.tiers[state.currentTierId]) {
+                            renderTier();
+                        } else {
+                            goHome();
+                        }
+                    }
+                    toast(`Импортировано ${count} тир-листов`);
+                } catch (err) {
+                    toast('Ошибка импорта: ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ====================== GALLERY ======================
+        let gallerySearch = '';
+        let gallerySort = 'recent';
+        let galleryTagFilter = null;
+
+        function renderGallery() {
+            const gallery = document.getElementById('gallery-view');
+            gallery.innerHTML = '';
+            let keys = Object.keys(state.tiers);
+            const totalCount = keys.length;
+
+            if (totalCount === 0) {
+                gallery.innerHTML = `
+                    <div class="gallery-empty">
+                        <div class="empty-icon">📦</div>
+                        <p>У вас пока нет тир-листов</p>
+                        <button class="btn" onclick="createNewTierList()">Создать первый тир-лист</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Search + sort toolbar (only when there's more than one list, to keep things simple)
+            if (totalCount > 1) {
+                const toolbar = document.createElement('div');
+                toolbar.className = 'gallery-toolbar';
+                toolbar.innerHTML = `
+                    <div class="input-group">
+                        <input type="text" id="gallery-search-input" placeholder="Поиск по названию..." value="${escapeHtml(gallerySearch)}">
+                        <span class="input-icon">🔍</span>
+                    </div>
+                    <select id="gallery-sort-select" title="Сортировка">
+                        <option value="recent">Сначала новые</option>
+                        <option value="name">По названию (А-Я)</option>
+                        <option value="items">По кол-ву элементов</option>
+                    </select>
+                `;
+                gallery.appendChild(toolbar);
+                toolbar.querySelector('#gallery-search-input').value = gallerySearch;
+                toolbar.querySelector('#gallery-sort-select').value = gallerySort;
+                toolbar.querySelector('#gallery-search-input').oninput = (e) => {
+                    gallerySearch = e.target.value;
+                    renderGallery();
+                    // keep focus + cursor position after re-render
+                    const input = document.getElementById('gallery-search-input');
+                    if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+                };
+                toolbar.querySelector('#gallery-sort-select').onchange = (e) => {
+                    gallerySort = e.target.value;
+                    renderGallery();
+                };
+            }
+
+            // Tag filter chips (only when at least one tier list has tags)
+            const allTags = Array.from(new Set(
+                Object.values(state.tiers).flatMap(t => t.tags || [])
+            )).sort((a, b) => a.localeCompare(b, 'ru'));
+
+            if (allTags.length > 0) {
+                if (galleryTagFilter && !allTags.includes(galleryTagFilter)) galleryTagFilter = null;
+                const tagBar = document.createElement('div');
+                tagBar.className = 'gallery-tagbar';
+                tagBar.innerHTML = `
+                    <span class="tag-chip ${galleryTagFilter === null ? 'active' : ''}" data-tag="">📁 Все</span>
+                    ${allTags.map(tag => `<span class="tag-chip ${galleryTagFilter === tag ? 'active' : ''}" data-tag="${escapeHtml(tag)}">🏷️ ${escapeHtml(tag)}</span>`).join('')}
+                `;
+                gallery.appendChild(tagBar);
+                tagBar.querySelectorAll('.tag-chip').forEach(chip => {
+                    chip.onclick = () => {
+                        galleryTagFilter = chip.dataset.tag || null;
+                        renderGallery();
+                    };
+                });
+            } else {
+                galleryTagFilter = null;
+            }
+
+            if (gallerySearch.trim()) {
+                const q = gallerySearch.trim().toLowerCase();
+                keys = keys.filter(id => state.tiers[id].name.toLowerCase().includes(q));
+            }
+
+            if (galleryTagFilter) {
+                keys = keys.filter(id => (state.tiers[id].tags || []).includes(galleryTagFilter));
+            }
+
+            if (gallerySort === 'name') {
+                keys.sort((a, b) => state.tiers[a].name.localeCompare(state.tiers[b].name, 'ru'));
+            } else if (gallerySort === 'items') {
+                keys.sort((a, b) => (state.tiers[b].items || []).length - (state.tiers[a].items || []).length);
+            }
+            // 'recent' keeps insertion order (ids are timestamp-based, newest last) -> reverse for newest-first
+            if (gallerySort === 'recent') keys.reverse();
+
+            if (keys.length === 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'gallery-no-results';
+                noResults.textContent = galleryTagFilter
+                    ? `Ничего не найдено по тегу "${galleryTagFilter}"${gallerySearch.trim() ? ` и запросу "${gallerySearch}"` : ''}`
+                    : `Ничего не найдено по запросу "${gallerySearch}"`;
+                gallery.appendChild(noResults);
+                return;
+            }
+
+            keys.forEach(id => {
+                const t = state.tiers[id];
+                const itemCount = t.items ? t.items.length : 0;
+                const subCount = t.items ? t.items.filter(i => i.subTierId).length : 0;
+                const tags = t.tags || [];
+                const card = document.createElement('div');
+                card.className = 'tier-card' + (t.note ? ' has-tooltip' : '');
+                card.innerHTML = `
+                    ${t.note ? `<div class="card-note-icon" title="Есть заметка">📝</div>` : ''}
+                    <div class="card-actions">
+                        <button class="btn btn-ghost btn-sm" title="Переименовать" onclick="event.stopPropagation(); renameTierList('${id}')">✏️</button>
+                        <button class="btn btn-danger btn-sm" title="Удалить" onclick="event.stopPropagation(); deleteTierList('${id}')">🗑️</button>
+                    </div>
+                    <div class="card-title">${escapeHtml(t.name)}</div>
+                    <div class="card-meta">${itemCount} элементов</div>
+                    ${subCount > 0 ? `<div class="card-badge">${subCount} под-тиров</div>` : ''}
+                    ${tags.length > 0 ? `<div class="card-tags">${tags.map(tag => `<span class="card-tag" data-tag="${escapeHtml(tag)}">${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
+                    ${t.note ? `<div class="note-tooltip"><span class="note-tooltip-label">Заметка</span>${escapeHtml(t.note)}</div>` : ''}
+                `;
+                card.onclick = () => openTier(id);
+                card.querySelectorAll('.card-tag').forEach(chip => {
+                    chip.onclick = (e) => {
+                        e.stopPropagation();
+                        galleryTagFilter = chip.dataset.tag;
+                        renderGallery();
+                    };
+                });
+                gallery.appendChild(card);
+            });
+        }
+
+        function createNewTierList() {
+            openModal('Новый тир-лист', '', '', (name, _image, note, tags) => {
+                if (!name) { toast('Введите название', 'error'); return; }
+                const id = 'tier_' + Date.now();
+                state.tiers[id] = {
+                    name: name,
+                    note: note || null,
+                    tags: tags || [],
+                    tierConfig: JSON.parse(JSON.stringify(DEFAULT_TIERS)),
+                    items: []
+                };
+                save();
+                renderGallery();
+                toast(`Тир-лист "${name}" создан`);
+            }, { showImage: false, showNote: true, showTags: true });
+        }
+
+        function renameTierList(id) {
+            openModal('Переименовать', state.tiers[id].name, '', (name, _image, note, tags) => {
+                if (!name) return;
+                state.tiers[id].name = name;
+                state.tiers[id].note = note || null;
+                state.tiers[id].tags = tags || [];
+                save();
+                renderGallery();
+                if (state.currentTierId === id) updateBreadcrumbs();
+            }, { showImage: false, showNote: true, noteVal: state.tiers[id].note || '', showTags: true, tagsVal: (state.tiers[id].tags || []).join(', ') });
+        }
+
+        function deleteTierList(id) {
+            if (!confirm(`Удалить "${state.tiers[id].name}"?`)) return;
+            Object.keys(state.tiers).forEach(tid => {
+                (state.tiers[tid].items || []).forEach(item => {
+                    if (item.subTierId === id) item.subTierId = null;
+                });
+            });
+            delete state.tiers[id];
+            save();
+            renderGallery();
+            if (state.currentTierId === id) goHome();
+            toast('Тир-лист удалён');
+        }
+
+        // ====================== NAVIGATION ======================
+        function openTier(id, pushHistory = true) {
+            if (!state.tiers[id]) { toast('Тир-лист не найден', 'error'); goHome(); return; }
+            if (pushHistory && state.currentTierId !== null) {
+                state.history.push(state.currentTierId);
+            }
+            state.currentTierId = id;
+            document.getElementById('gallery-view').style.display = 'none';
+            document.getElementById('tier-view').style.display = 'flex';
+            renderTier();
+            updateBreadcrumbs();
+        }
+
+        function updateBreadcrumbs() {
+            const bc = document.getElementById('breadcrumb');
+            let html = '<span onclick="goHome()">🏠 Главная</span>';
+            state.history.forEach(id => {
+                if (state.tiers[id]) {
+                    html += ` <span class="sep">›</span> <span onclick="navigateToHistory('${id}')">${escapeHtml(state.tiers[id].name)}</span>`;
+                }
+            });
+            if (state.currentTierId && state.tiers[state.currentTierId]) {
+                html += ` <span class="sep">›</span> <span class="current">${escapeHtml(state.tiers[state.currentTierId].name)}</span>`;
+            }
+            bc.innerHTML = html;
+        }
+
+        function navigateToHistory(id) {
+            const idx = state.history.indexOf(id);
+            if (idx >= 0) state.history = state.history.slice(0, idx);
+            state.currentTierId = id;
+            renderTier();
+            updateBreadcrumbs();
+        }
+
+        function goHome() {
+            state.currentTierId = null;
+            state.history = [];
+            document.getElementById('gallery-view').style.display = 'grid';
+            document.getElementById('tier-view').style.display = 'none';
+            renderGallery();
+        }
+
+        function goBack() {
+            if (state.history.length === 0) { goHome(); return; }
+            const prevId = state.history.pop();
+            state.currentTierId = prevId;
+            renderTier();
+            updateBreadcrumbs();
+        }
+
+        // ====================== TIER CONFIG (CRUD) ======================
+        function getTierConfig() {
+            const t = state.tiers[state.currentTierId];
+            if (!t.tierConfig || t.tierConfig.length === 0) {
+                t.tierConfig = JSON.parse(JSON.stringify(DEFAULT_TIERS));
+                save();
+            }
+            return t.tierConfig;
+        }
+
+        function editTierRow(oldLabel) {
+            const config = getTierConfig();
+            const entry = config.find(c => c.label === oldLabel);
+            if (!entry) return;
+            openTierModal('Редактировать тир', entry.label, entry.color, (newLabel, newColor) => {
+                if (!newLabel) { toast('Введите название тира', 'error'); return; }
+                if (newLabel !== oldLabel && config.find(c => c.label === newLabel)) {
+                    toast('Тир с таким именем уже есть', 'error');
+                    return;
+                }
+                if (newLabel !== oldLabel) {
+                    const items = state.tiers[state.currentTierId].items;
+                    items.forEach(item => {
+                        if (item.tier === oldLabel) item.tier = newLabel;
+                    });
+                }
+                entry.label = newLabel;
+                entry.color = newColor;
+                save();
+                renderTier();
+            });
+        }
+
+        function reorderTierRow(draggedLabel, targetLabel) {
+            const config = getTierConfig();
+            const fromIdx = config.findIndex(c => c.label === draggedLabel);
+            const toIdx = config.findIndex(c => c.label === targetLabel);
+            if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+            const [moved] = config.splice(fromIdx, 1);
+            config.splice(toIdx, 0, moved);
+            save();
+            renderTier();
+        }
+
+        function deleteTierRow(label) {
+            if (!confirm(`Удалить тир "${label}"? Элементы переместятся в банк.`)) return;
+            const config = getTierConfig();
+            const idx = config.findIndex(c => c.label === label);
+            if (idx < 0) return;
+            config.splice(idx, 1);
+            const items = state.tiers[state.currentTierId].items;
+            items.forEach(item => {
+                if (item.tier === label) item.tier = null;
+            });
+            save();
+            renderTier();
+        }
+
+        // ====================== ITEMS ======================
+        function renderTier() {
+            const container = document.getElementById('tier-rows-container');
+            container.innerHTML = '';
+            const tierData = state.tiers[state.currentTierId];
+            if (!tierData) { goHome(); return; }
+            const config = getTierConfig();
+
+            // ---- BANK ROW (unranked items land here first) ----
+            const bankRow = document.createElement('div');
+            bankRow.className = 'tier-row bank-row';
+
+            const bankLabel = document.createElement('div');
+            bankLabel.className = 'tier-label bank-label';
+            bankLabel.innerHTML = `📥<br>Банк`;
+
+            const bankItemsDiv = document.createElement('div');
+            bankItemsDiv.className = 'tier-items bank-items';
+            bankItemsDiv.ondragover = (e) => { e.preventDefault(); bankItemsDiv.classList.add('drag-over'); };
+            bankItemsDiv.ondragleave = () => bankItemsDiv.classList.remove('drag-over');
+            bankItemsDiv.ondrop = (e) => { e.preventDefault(); bankItemsDiv.classList.remove('drag-over'); handleDrop(e, null); };
+
+            (tierData.items || []).filter(item => !item.tier).forEach(item => {
+                bankItemsDiv.appendChild(createItemCardElement(item));
+            });
+            if ((tierData.items || []).filter(item => !item.tier).length === 0) {
+                const hint = document.createElement('div');
+                hint.style.cssText = 'color:var(--text-dim);font-size:12px;padding:8px;align-self:center;';
+                hint.textContent = 'Новые элементы появляются здесь — перетащите их в нужный тир';
+                bankItemsDiv.appendChild(hint);
+            }
+
+            bankRow.appendChild(bankLabel);
+            bankRow.appendChild(bankItemsDiv);
+            container.appendChild(bankRow);
+
+            if (config.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.style.cssText = 'text-align:center;padding:40px;color:var(--text-dim)';
+                emptyMsg.textContent = 'Нет тиров. Добавьте хотя бы один через кнопку "➕ Тир".';
+                container.appendChild(emptyMsg);
+                return;
+            }
+
+            config.forEach(cfg => {
+                const row = document.createElement('div');
+                row.className = 'tier-row';
+
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'tier-label';
+                labelDiv.style.backgroundColor = cfg.color;
+                labelDiv.draggable = true;
+                labelDiv.title = 'Перетащите, чтобы изменить порядок тиров';
+                labelDiv.innerHTML = `
+                    ${escapeHtml(cfg.label)}
+                    <div class="tier-label-actions">
+                        <button class="btn" title="Редактировать (название и цвет)" onclick="event.stopPropagation(); editTierRow('${cfg.label}')">✏️</button>
+                        <button class="btn btn-danger" title="Удалить тир" onclick="event.stopPropagation(); deleteTierRow('${cfg.label}')">🗑️</button>
+                    </div>
+                `;
+
+                labelDiv.ondragstart = (e) => {
+                    if (e.target.closest('.tier-label-actions')) { e.preventDefault(); return; }
+                    e.dataTransfer.setData('text/tier-label', cfg.label);
+                    labelDiv.classList.add('dragging-tier');
+                };
+                labelDiv.ondragend = () => labelDiv.classList.remove('dragging-tier');
+                labelDiv.ondragover = (e) => {
+                    if (e.dataTransfer.types.includes('text/tier-label')) e.preventDefault();
+                };
+                labelDiv.ondrop = (e) => {
+                    if (!e.dataTransfer.types.includes('text/tier-label')) return;
+                    e.preventDefault();
+                    const draggedLabel = e.dataTransfer.getData('text/tier-label');
+                    reorderTierRow(draggedLabel, cfg.label);
+                };
+
+                const itemsDiv = document.createElement('div');
+                itemsDiv.className = 'tier-items';
+                itemsDiv.dataset.tierLabel = cfg.label;
+                itemsDiv.ondragover = (e) => { e.preventDefault(); itemsDiv.classList.add('drag-over'); };
+                itemsDiv.ondragleave = () => itemsDiv.classList.remove('drag-over');
+                itemsDiv.ondrop = (e) => { e.preventDefault(); itemsDiv.classList.remove('drag-over'); handleDrop(e, cfg.label); };
+
+                (tierData.items || []).filter(item => item.tier === cfg.label).forEach(item => {
+                    itemsDiv.appendChild(createItemCardElement(item));
+                });
+
+                row.appendChild(labelDiv);
+                row.appendChild(itemsDiv);
+                container.appendChild(row);
+            });
+        }
+
+        function createItemCardElement(item) {
+            const hasImage = !!item.image;
+            const el = document.createElement('div');
+            el.className = 'item-card' + (hasImage ? ' has-image' : '') + (item.subTierId ? ' is-subtier' : '') + (item.note ? ' has-tooltip' : '');
+            el.draggable = true;
+            el.dataset.itemId = item.id;
+
+            const imgHtml = hasImage
+                ? `<img class="item-card-img" src="${escapeHtml(item.image)}" alt="" loading="lazy" onerror="this.style.display='none'; this.closest('.item-card').classList.remove('has-image');">`
+                : '';
+
+            const noteIndicatorHtml = item.note ? `<div class="note-indicator" title="Есть заметка">📝</div>` : '';
+            const subtierBadgeHtml = item.subTierId ? `<div class="subtier-badge" title="Открыть под-тир">↳</div>` : '';
+            const tooltipHtml = item.note ? `<div class="note-tooltip"><span class="note-tooltip-label">Заметка</span>${escapeHtml(item.note)}</div>` : '';
+
+            el.innerHTML = `
+                <div class="item-card-inner">
+                    ${imgHtml}
+                    <span class="item-name">${escapeHtml(item.name)}</span>
+                </div>
+                ${noteIndicatorHtml}
+                ${subtierBadgeHtml}
+                <div class="item-actions">
+                    <button class="btn btn-ghost" title="Редактировать" onclick="event.stopPropagation(); editItem('${item.id}')">✏️</button>
+                    <button class="btn btn-danger" title="Удалить" onclick="event.stopPropagation(); deleteItem('${item.id}')">🗑️</button>
+                </div>
+                ${tooltipHtml}
+            `;
+
+            el.ondragstart = (e) => {
+                e.dataTransfer.setData('text/plain', item.id);
+                el.classList.add('dragging');
+            };
+            el.ondragend = () => el.classList.remove('dragging');
+
+            el.ondragover = (e) => {
+                if (!e.dataTransfer.types.includes('text/plain')) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const rect = el.getBoundingClientRect();
+                const before = (e.clientX - rect.left) < rect.width / 2;
+                el.classList.toggle('drag-over-before', before);
+                el.classList.toggle('drag-over-after', !before);
+            };
+            el.ondragleave = () => {
+                el.classList.remove('drag-over-before', 'drag-over-after');
+            };
+            el.ondrop = (e) => {
+                if (!e.dataTransfer.types.includes('text/plain')) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const after = el.classList.contains('drag-over-after');
+                el.classList.remove('drag-over-before', 'drag-over-after');
+                const draggedId = e.dataTransfer.getData('text/plain');
+                if (!draggedId || draggedId === item.id) return;
+                moveItemBeside(draggedId, item.id, item.tier || null, after);
+            };
+
+            el.onclick = (e) => {
+                if (e.target.closest('.item-actions')) return;
+                if (item.subTierId) {
+                    openTier(item.subTierId);
+                } else {
+                    if (confirm(`Сделать "${item.name}" отдельным тир-листом?`)) {
+                        const subId = 'tier_' + Date.now();
+                        state.tiers[subId] = {
+                            name: item.name,
+                            tierConfig: JSON.parse(JSON.stringify(DEFAULT_TIERS)),
+                            items: []
+                        };
+                        item.subTierId = subId;
+                        save();
+                        renderTier();
+                        toast(`Создан под-тир "${item.name}"`);
+                    }
+                }
+            };
+
+            return el;
+        }
+
+        function editItem(itemId) {
+            const items = state.tiers[state.currentTierId].items;
+            const item = items.find(i => i.id === itemId);
+            if (!item) return;
+            openModal('Редактировать элемент', item.name, item.image || '', (name, image, note) => {
+                if (!name) { toast('Название не может быть пустым', 'error'); return; }
+                item.name = name;
+                item.image = image || null;
+                item.note = note || null;
+                save();
+                renderTier();
+                toast('Элемент обновлён');
+            }, { showImage: true, showNote: true, noteVal: item.note || '' });
+        }
+
+        function deleteItem(itemId) {
+            if (!confirm('Удалить этот элемент?')) return;
+            const items = state.tiers[state.currentTierId].items;
+            const idx = items.findIndex(i => i.id === itemId);
+            if (idx >= 0) items.splice(idx, 1);
+            save();
+            renderTier();
+            toast('Элемент удалён');
+        }
+
+        function moveItemToTier(itemId, tierLabel) {
+            const items = state.tiers[state.currentTierId].items;
+            const idx = items.findIndex(i => i.id === itemId);
+            if (idx === -1) return;
+            const [item] = items.splice(idx, 1);
+            item.tier = tierLabel;
+            items.push(item);
+            save();
+            renderTier();
+        }
+
+        function moveItemBeside(itemId, targetItemId, tierLabel, after) {
+            if (itemId === targetItemId) return;
+            const items = state.tiers[state.currentTierId].items;
+            const idx = items.findIndex(i => i.id === itemId);
+            if (idx === -1) return;
+            const [item] = items.splice(idx, 1);
+            item.tier = tierLabel;
+            let targetIdx = items.findIndex(i => i.id === targetItemId);
+            if (targetIdx === -1) {
+                items.push(item);
+            } else {
+                if (after) targetIdx += 1;
+                items.splice(targetIdx, 0, item);
+            }
+            save();
+            renderTier();
+        }
+
+        function handleDrop(e, tierLabel) {
+            e.preventDefault();
+            const itemId = e.dataTransfer.getData('text/plain');
+            if (!itemId) return;
+            moveItemToTier(itemId, tierLabel);
+        }
+
+        // ====================== GRAPH VIEW ======================
+        let graphMode = 'view'; // 'view' | 'connect' | 'disconnect'
+        let graphConnectionStart = null;
+
+        function toggleGraph() {
+            const gv = document.getElementById('graph-view');
+            if (gv.style.display === 'block') {
+                gv.style.display = 'none';
+                graphMode = 'view';
+            } else {
+                gv.style.display = 'block';
+                setTimeout(() => renderGraph(), 100);
+            }
+        }
+
+        function renderGraph() {
+            const container = document.getElementById('graph-container');
+            container.innerHTML = '';
+            const nodes = [];
+            const keys = Object.keys(state.tiers);
+            if (keys.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-dim)">Нет тир-листов</div>';
+                return;
+            }
+
+            // Add toolbar
+            const toolbar = document.createElement('div');
+            toolbar.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:6px;';
+            toolbar.innerHTML = `
+                <button class="btn btn-sm ${graphMode === 'view' ? 'btn-ghost' : ''}" onclick="graphMode='view';renderGraph()">👁️ Просмотр</button>
+                <button class="btn btn-sm ${graphMode === 'connect' ? '' : 'btn-ghost'}" onclick="graphMode='connect';renderGraph()">🔗 Связать</button>
+                <button class="btn btn-sm btn-danger ${graphMode === 'disconnect' ? '' : 'btn-ghost'}" onclick="graphMode='disconnect';renderGraph()">✂️ Отвязать</button>
+            `;
+            container.appendChild(toolbar);
+
+            const cols = Math.ceil(Math.sqrt(keys.length));
+            const rect = container.getBoundingClientRect();
+            const cellW = Math.max(180, (rect.width - 60) / cols);
+            const cellH = 80;
+
+            keys.forEach((id, index) => {
+                const node = document.createElement('div');
+                node.className = 'graph-node';
+                node.textContent = state.tiers[id].name;
+                node.dataset.tierId = id;
+
+                // Style based on mode
+                if (graphMode === 'connect') {
+                    node.style.cursor = 'pointer';
+                    node.style.borderColor = '#22c55e';
+                    node.title = 'Кликните чтобы создать связь';
+                } else if (graphMode === 'disconnect') {
+                    node.style.cursor = 'pointer';
+                    node.style.borderColor = '#ef4444';
+                    node.title = 'Кликните чтобы удалить связь';
+                }
+
+                const col = index % cols;
+                const row = Math.floor(index / cols);
+                const x = 20 + col * cellW + Math.random() * 20;
+                const y = 20 + row * cellH + Math.random() * 20;
+                node.style.left = x + 'px';
+                node.style.top = y + 'px';
+
+                // Drag for repositioning
+                node.onmousedown = (e) => {
+                    if (graphMode !== 'view') return;
+                    e.preventDefault();
+                    let shiftX = e.clientX - node.getBoundingClientRect().left;
+                    let shiftY = e.clientY - node.getBoundingClientRect().top;
+                    
+                    function moveAt(pageX, pageY) {
+                        const cr = container.getBoundingClientRect();
+                        let left = pageX - shiftX - cr.left;
+                        let top = pageY - shiftY - cr.top;
+                        left = Math.max(0, Math.min(left, cr.width - node.offsetWidth));
+                        top = Math.max(0, Math.min(top, cr.height - node.offsetHeight));
+                        node.style.left = left + 'px';
+                        node.style.top = top + 'px';
+                        updateGraphEdges(container, nodes);
+                    }
+
+                    function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
+                    document.addEventListener('mousemove', onMouseMove);
+                    node.onmouseup = () => {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        node.onmouseup = null;
+                    };
+                };
+
+                // Click for connection management
+                node.onclick = (e) => {
+                    if (graphMode === 'view') return;
+                    e.stopPropagation();
+                    
+                    if (graphMode === 'connect') {
+                        // Find items in this tier that don't have subTierId
+                        const items = state.tiers[id].items || [];
+                        const unlinkedItems = items.filter(i => !i.subTierId);
+                        
+                        if (unlinkedItems.length === 0) {
+                            toast('Нет элементов без под-тира', 'error');
+                            return;
+                        }
+                        
+                        // Show a simple prompt to pick which item to link
+                        const itemNames = unlinkedItems.map(i => i.name).join('\n');
+                        const itemName = prompt(
+                            `Выберите элемент из "${state.tiers[id].name}" для создания под-тира:\n\n${unlinkedItems.map((i, idx) => `${idx + 1}. ${i.name}`).join('\n')}\n\nВведите номер или название:`,
+                            unlinkedItems[0].name
+                        );
+                        
+                        if (!itemName) return;
+                        
+                        const item = unlinkedItems.find(i => 
+                            i.name.toLowerCase() === itemName.toLowerCase() || 
+                            i.name === itemName
+                        );
+                        
+                        if (!item) {
+                            toast('Элемент не найден', 'error');
+                            return;
+                        }
+                        
+                        // Create sub-tier
+                        const subId = 'tier_' + Date.now();
+                        state.tiers[subId] = {
+                            name: item.name,
+                            tierConfig: JSON.parse(JSON.stringify(DEFAULT_TIERS)),
+                            items: []
+                        };
+                        item.subTierId = subId;
+                        save();
+                        renderGraph();
+                        toast(`Создана связь: "${state.tiers[id].name}" → "${item.name}"`);
+                    }
+                    
+                    if (graphMode === 'disconnect') {
+                        const items = state.tiers[id].items || [];
+                        const linkedItems = items.filter(i => i.subTierId);
+                        
+                        if (linkedItems.length === 0) {
+                            toast('Нет связанных элементов', 'error');
+                            return;
+                        }
+                        
+                        const itemName = prompt(
+                            `Какой элемент отвязать?\n${linkedItems.map((i, idx) => `${idx + 1}. ${i.name}`).join('\n')}\n\nВведите название:`,
+                            linkedItems[0].name
+                        );
+                        
+                        if (!itemName) return;
+                        const item = linkedItems.find(i => i.name.toLowerCase() === itemName.toLowerCase());
+                        if (!item) { toast('Элемент не найден', 'error'); return; }
+                        
+                        item.subTierId = null;
+                        save();
+                        renderGraph();
+                        toast(`Связь удалена: "${state.tiers[id].name}"`);
+                    }
+                };
+
+                // Double click to navigate
+                node.ondblclick = () => {
+                    document.getElementById('graph-view').style.display = 'none';
+                    openTier(id, false);
+                };
+
+                container.appendChild(node);
+                nodes.push({ id, el: node });
+            });
+
+            updateGraphEdges(container, nodes);
+        }
+
+        function updateGraphEdges(container, nodes) {
+            container.querySelectorAll('.graph-edge').forEach(e => e.remove());
+            Object.keys(state.tiers).forEach(id => {
+                const items = state.tiers[id].items || [];
+                items.forEach(item => {
+                    if (item.subTierId) {
+                        const startNode = nodes.find(n => n.id === id);
+                        const endNode = nodes.find(n => n.id === item.subTierId);
+                        if (startNode && endNode) {
+                            const edge = document.createElement('div');
+                            edge.className = 'graph-edge';
+                            
+                            const x1 = startNode.el.offsetLeft + startNode.el.offsetWidth / 2;
+                            const y1 = startNode.el.offsetTop + startNode.el.offsetHeight / 2;
+                            const x2 = endNode.el.offsetLeft + endNode.el.offsetWidth / 2;
+                            const y2 = endNode.el.offsetTop + endNode.el.offsetHeight / 2;
+                            
+                            const length = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+                            if (length < 5) return;
+                            const angle = Math.atan2(y2-y1, x2-x1) * 180 / Math.PI;
+                            
+                            edge.style.width = length + 'px';
+                            edge.style.left = x1 + 'px';
+                            edge.style.top = y1 + 'px';
+                            edge.style.transform = `rotate(${angle}deg)`;
+                            
+                            container.appendChild(edge);
+                        }
+                    }
+                });
+            });
+        }
+
+        // ====================== UTILITY ======================
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ====================== KEYBOARD ======================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (document.getElementById('modal-overlay').classList.contains('active')) {
+                    closeModal();
+                } else if (document.getElementById('tier-modal-overlay').classList.contains('active')) {
+                    closeTierModal();
+                } else if (document.getElementById('graph-view').style.display === 'block') {
+                    toggleGraph();
+                }
+            }
+        });
+
+        document.getElementById('modal-input-name').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) modalConfirm();
+        });
+        document.getElementById('tier-modal-input-label').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') tierModalConfirm();
+        });
+
+        // ====================== INIT ======================
+        // Migration from old storage keys
+        const oldData = localStorage.getItem('tierLists2');
+        if (oldData && Object.keys(state.tiers).length === 0) {
+            try {
+                state.tiers = JSON.parse(oldData);
+                localStorage.removeItem('tierLists2');
+            } catch(e) {}
+        }
+
+        Object.keys(state.tiers).forEach(id => {
+            const t = state.tiers[id];
+            if (!t.tierConfig) t.tierConfig = JSON.parse(JSON.stringify(DEFAULT_TIERS));
+            if (!t.items) t.items = [];
+            if (t.note === undefined) t.note = null;
+            if (!Array.isArray(t.tags)) t.tags = [];
+            (t.items || []).forEach(item => {
+                if (item.tier === undefined) item.tier = 'S';
+                if (item.note === undefined) item.note = null;
+            });
+        });
+        save();
+
+        renderGallery();
+    </script>
+</body>
+</html>
