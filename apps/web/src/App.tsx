@@ -6,6 +6,9 @@ import ProfilePage from './features/profile/ProfilePage'
 import TestsPage from './features/tests/TestsPage'
 import TestRunnerPage from './features/tests/TestRunnerPage'
 import SavedResultPage from './features/tests/SavedResultPage'
+import PeoplePage from './features/friends/PeoplePage'
+import FriendsPage from './features/friends/FriendsPage'
+import PublicProfilePage from './features/profile/PublicProfilePage'
 import { supabase } from './lib/supabase'
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -35,6 +38,8 @@ export default function App() {
       <header className="flex items-center gap-4 border-b border-gray-200 p-4">
         <Link to="/" className="font-bold text-violet-700">TierMind</Link>
         <Link to="/tests" className="text-sm">Тесты</Link>
+        <Link to="/people" className="text-sm">Люди</Link>
+        {session && <Link to="/friends" className="text-sm">Друзья</Link>}
         <div className="ml-auto flex items-center gap-4 text-sm">
           {session ? (
             <>
@@ -55,6 +60,9 @@ export default function App() {
         <Route path="/tests" element={<TestsPage />} />
         <Route path="/tests/:slug" element={<TestRunnerPage />} />
         <Route path="/tests/:slug/result" element={<RequireAuth><SavedResultPage /></RequireAuth>} />
+        <Route path="/people" element={<RequireAuth><PeoplePage /></RequireAuth>} />
+        <Route path="/friends" element={<RequireAuth><FriendsPage /></RequireAuth>} />
+        <Route path="/u/:username" element={<PublicProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
