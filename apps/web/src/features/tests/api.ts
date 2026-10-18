@@ -58,3 +58,22 @@ export async function updateResultVisibility(id: string, visibility: Visibility)
   const { error } = await supabase.from('test_results').update({ visibility }).eq('id', id)
   if (error) throw new Error(error.message)
 }
+
+/** Последние результаты любого пользователя, которые разрешено видеть текущему (фильтрует RLS) */
+export async function fetchLatestResultsOfUser(userId: string): Promise<SavedResult[]> {
+  const { data, error } = await supabase
+    .from('test_results')
+    .select(COLUMNS)
+    .eq('user_id', userId)
+    .order('taken_at', { ascending: false })
+  if (error) throw new Error(error.message)
+  const seen = new Set<string>()
+  const latest: SavedResult[] = []
+  for (const row of (data ?? []) as SavedResult[]) {
+    if (!seen.has(row.test_slug)) {
+      seen.add(row.test_slug)
+      latest.push(row)
+    }
+  }
+  return latest
+}

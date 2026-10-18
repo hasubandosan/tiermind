@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../../lib/supabase'
 
@@ -70,7 +71,10 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-md p-6">
       <h1 className="mb-1 text-2xl font-bold">Мой профиль</h1>
-      <p className="mb-4 text-sm text-gray-500">{user?.email}</p>
+      <p className="mb-1 text-sm text-gray-500">{user?.email}</p>
+      <p className="mb-4 text-sm">
+        <Link to={`/u/${profile.username}`} className="text-violet-700 underline">Открыть мою страницу</Link>
+      </p>
       <form onSubmit={onSave} className="flex flex-col gap-3">
         <label className="text-sm font-medium">
           Ник
@@ -105,8 +109,8 @@ export default function ProfilePage() {
             className="mt-1 w-full rounded border border-gray-300 p-2 font-normal"
           >
             <option value="public">Все</option>
-            <option value="friends">Только друзья</option>
-            <option value="private">Только я</option>
+            <option value="friends">Только друзья (имя и ник видны всем)</option>
+            <option value="private">Только я (меня нельзя найти)</option>
           </select>
         </label>
         <button
