@@ -3,6 +3,9 @@ import { Link, Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './features/auth/AuthProvider'
 import AuthPage from './features/auth/AuthPage'
 import ProfilePage from './features/profile/ProfilePage'
+import TestsPage from './features/tests/TestsPage'
+import TestRunnerPage from './features/tests/TestRunnerPage'
+import SavedResultPage from './features/tests/SavedResultPage'
 import { supabase } from './lib/supabase'
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -17,6 +20,9 @@ function Home() {
     <div className="mx-auto max-w-md p-6">
       <h1 className="text-3xl font-bold">TierMind</h1>
       <p className="mt-2 text-gray-600">Тесты, предпочтения и тир-листы с друзьями.</p>
+      <Link to="/tests" className="mt-4 inline-block rounded bg-violet-600 px-4 py-2 font-medium text-white">
+        Пройти тест
+      </Link>
     </div>
   )
 }
@@ -28,6 +34,7 @@ export default function App() {
     <>
       <header className="flex items-center gap-4 border-b border-gray-200 p-4">
         <Link to="/" className="font-bold text-violet-700">TierMind</Link>
+        <Link to="/tests" className="text-sm">Тесты</Link>
         <div className="ml-auto flex items-center gap-4 text-sm">
           {session ? (
             <>
@@ -45,6 +52,9 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+        <Route path="/tests" element={<TestsPage />} />
+        <Route path="/tests/:slug" element={<TestRunnerPage />} />
+        <Route path="/tests/:slug/result" element={<RequireAuth><SavedResultPage /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
