@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Avatar from '../../components/Avatar'
 import { useAuth } from '../auth/AuthProvider'
+import { fetchPreferencesOf } from '../catalog/api'
+import PreferencesSummary from '../catalog/PreferencesSummary'
+import type { PreferenceRow } from '../catalog/types'
 import { fetchProfileCard, type ProfileCard } from '../friends/api'
 import FriendButton from '../friends/FriendButton'
 import { fetchLatestResultsOfUser, type SavedResult } from '../tests/api'
@@ -14,6 +17,7 @@ function Inner({ username }: { username: string }) {
   const { user } = useAuth()
   const [card, setCard] = useState<ProfileCard | null | undefined>(undefined)
   const [results, setResults] = useState<SavedResult[]>([])
+  const [prefs, setPrefs] = useState<PreferenceRow[]>([])
   const [error, setError] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
 
@@ -25,10 +29,14 @@ function Inner({ username }: { username: string }) {
         if (cancelled) return
         setCard(c)
         if (c?.can_view) {
-          const r = await fetchLatestResultsOfUser(c.id)
-          if (!cancelled) setResults(r)
+          const [r, p] = await Promise.all([fetchLatestResultsOfUser(c.id), fetchPreferencesOf(c.id)])
+          if (!cancelled) {
+            setResults(r)
+            setPrefs(p)
+          }
         } else {
           setResults([])
+          setPrefs([])
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e))
@@ -83,6 +91,14 @@ function Inner({ username }: { username: string }) {
       ) : (
         <>
           {card.bio && <p className="mb-6 whitespace-pre-wrap">{card.bio}</p>}
+          <h2 className="mb-3 text-lg font-semibold">Предпочтения</h2>
+          {prefs.length === 0 ? (
+            <p className="mb-6 text-sm text-gray-600">Нет доступных предпочтений (они скрыты или ещё не добавлены).</p>
+          ) : (
+            <div className="mb-6">
+              <PreferencesSummary rows={prefs} />
+            </div>
+          )}
           <h2 className="mb-3 text-lg font-semibold">Результаты тестов</h2>
           {shown.length === 0 ? (
             <p className="text-sm text-gray-600">Нет доступных результатов.</p>
