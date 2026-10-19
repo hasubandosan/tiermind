@@ -10,6 +10,9 @@ import FriendButton from '../friends/FriendButton'
 import { fetchLatestResultsOfUser, type SavedResult } from '../tests/api'
 import { getTest } from '../tests/registry'
 import ResultView from '../tests/ResultView'
+import { listTierLists } from '../tierlists/api'
+import { TierListCard, nestedCounts } from '../tierlists/TierListsPage'
+import type { TierListSummary } from '../tierlists/types'
 
 const VISIBILITY_LABEL = { public: 'Открытый профиль', friends: 'Профиль для друзей', private: 'Скрытый профиль' }
 
@@ -18,6 +21,7 @@ function Inner({ username }: { username: string }) {
   const [card, setCard] = useState<ProfileCard | null | undefined>(undefined)
   const [results, setResults] = useState<SavedResult[]>([])
   const [prefs, setPrefs] = useState<PreferenceRow[]>([])
+  const [lists, setLists] = useState<TierListSummary[]>([])
   const [error, setError] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
 
@@ -29,14 +33,20 @@ function Inner({ username }: { username: string }) {
         if (cancelled) return
         setCard(c)
         if (c?.can_view) {
-          const [r, p] = await Promise.all([fetchLatestResultsOfUser(c.id), fetchPreferencesOf(c.id)])
+          const [r, p, l] = await Promise.all([
+            fetchLatestResultsOfUser(c.id),
+            fetchPreferencesOf(c.id),
+            listTierLists(c.id),
+          ])
           if (!cancelled) {
             setResults(r)
             setPrefs(p)
+            setLists(l)
           }
         } else {
           setResults([])
           setPrefs([])
+          setLists([])
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e))
@@ -97,6 +107,18 @@ function Inner({ username }: { username: string }) {
           ) : (
             <div className="mb-6">
               <PreferencesSummary rows={prefs} />
+            </div>
+          )}
+          <h2 className="mb-3 text-lg font-semibold">Тир-листы</h2>
+          {lists.filter((l) => l.parent_list_id === null).length === 0 ? (
+            <p className="mb-6 text-sm text-gray-600">Нет доступных тир-листов.</p>
+          ) : (
+            <div className="mb-6 grid gap-3 sm:grid-cols-2">
+              {lists
+                .filter((l) => l.parent_list_id === null)
+                .map((l) => (
+                  <TierListCard key={l.id} list={l} nestedCount={nestedCounts(lists).get(l.id) ?? 0} />
+                ))}
             </div>
           )}
           <h2 className="mb-3 text-lg font-semibold">Результаты тестов</h2>
