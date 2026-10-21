@@ -5,7 +5,7 @@
 Каждый файл сценариев запускается на ЧИСТОЙ базе (они создают одних и тех же тестовых пользователей):
 
 ```bash
-for f in rls_scenarios.sql rls_scenarios_m4.sql; do
+for f in rls_scenarios.sql rls_scenarios_m4.sql rls_scenarios_m5.sql rls_scenarios_m6.sql; do
   dropdb --if-exists t; createdb t
   cat supabase/tests/harness.sql supabase/migrations/*.sql > /tmp/all.sql
   psql -v ON_ERROR_STOP=1 -q -d t -f /tmp/all.sql
