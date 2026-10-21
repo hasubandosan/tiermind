@@ -14,6 +14,8 @@ import PreferencesPage from './features/catalog/PreferencesPage'
 import TierListsPage from './features/tierlists/TierListsPage'
 import TierListPage from './features/tierlists/TierListPage'
 import GroupsPage from './features/groups/GroupsPage'
+import TemplatesPage from './features/templates/TemplatesPage'
+import TemplatePage from './features/templates/TemplatePage'
 import GroupPage from './features/groups/GroupPage'
 import { supabase } from './lib/supabase'
 
@@ -45,6 +47,7 @@ export default function App() {
         <Link to="/" className="font-bold text-violet-700">TierMind</Link>
         <Link to="/tests" className="text-sm">Тесты</Link>
         <Link to="/catalog" className="text-sm">Каталог</Link>
+        <Link to="/templates" className="text-sm">Шаблоны</Link>
         <Link to="/people" className="text-sm">Люди</Link>
         {session && <Link to="/friends" className="text-sm">Друзья</Link>}
         {session && <Link to="/preferences" className="text-sm">Предпочтения</Link>}
@@ -76,6 +79,8 @@ export default function App() {
         <Route path="/tierlists/:id" element={<TierListPage />} />
         <Route path="/groups" element={<RequireAuth><GroupsPage /></RequireAuth>} />
         <Route path="/groups/:id" element={<RequireAuth><GroupPage /></RequireAuth>} />
+        <Route path="/templates" element={<TemplatesPage />} />
+        <Route path="/templates/:id" element={<TemplatePage />} />
         <Route path="/people" element={<RequireAuth><PeoplePage /></RequireAuth>} />
         <Route path="/friends" element={<RequireAuth><FriendsPage /></RequireAuth>} />
         <Route path="/u/:username" element={<PublicProfilePage />} />

@@ -63,7 +63,10 @@ export function comparePrefs(rows: GroupPrefRow[]): Pair[] {
   return allPairs(vectors, 4, MIN_COMMON)
 }
 
-export function compareTiers(rows: TierScoreRow[]): Pair[] {
+/** Достаточно полей user_id, item_id, tier_score — подходит и для групп, и для прохождений шаблона */
+export type ScoreLike = Pick<TierScoreRow, 'user_id' | 'item_id' | 'tier_score'>
+
+export function compareTiers(rows: ScoreLike[]): Pair[] {
   // один элемент может быть в нескольких тир-листах человека — берём среднее
   const acc = new Map<string, Map<string, { sum: number; n: number }>>()
   for (const r of rows) {
