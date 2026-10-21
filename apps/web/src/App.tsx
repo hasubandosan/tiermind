@@ -11,6 +11,10 @@ import FriendsPage from './features/friends/FriendsPage'
 import PublicProfilePage from './features/profile/PublicProfilePage'
 import CatalogPage from './features/catalog/CatalogPage'
 import PreferencesPage from './features/catalog/PreferencesPage'
+import TierListsPage from './features/tierlists/TierListsPage'
+import TierListPage from './features/tierlists/TierListPage'
+import GroupsPage from './features/groups/GroupsPage'
+import GroupPage from './features/groups/GroupPage'
 import { supabase } from './lib/supabase'
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -44,6 +48,8 @@ export default function App() {
         <Link to="/people" className="text-sm">Люди</Link>
         {session && <Link to="/friends" className="text-sm">Друзья</Link>}
         {session && <Link to="/preferences" className="text-sm">Предпочтения</Link>}
+        {session && <Link to="/tierlists" className="text-sm">Тир-листы</Link>}
+        {session && <Link to="/groups" className="text-sm">Группы</Link>}
         <div className="ml-auto flex items-center gap-4 text-sm">
           {session ? (
             <>
@@ -66,6 +72,10 @@ export default function App() {
         <Route path="/tests/:slug/result" element={<RequireAuth><SavedResultPage /></RequireAuth>} />
         <Route path="/catalog" element={<CatalogPage />} />
         <Route path="/preferences" element={<RequireAuth><PreferencesPage /></RequireAuth>} />
+        <Route path="/tierlists" element={<RequireAuth><TierListsPage /></RequireAuth>} />
+        <Route path="/tierlists/:id" element={<TierListPage />} />
+        <Route path="/groups" element={<RequireAuth><GroupsPage /></RequireAuth>} />
+        <Route path="/groups/:id" element={<RequireAuth><GroupPage /></RequireAuth>} />
         <Route path="/people" element={<RequireAuth><PeoplePage /></RequireAuth>} />
         <Route path="/friends" element={<RequireAuth><FriendsPage /></RequireAuth>} />
         <Route path="/u/:username" element={<PublicProfilePage />} />
